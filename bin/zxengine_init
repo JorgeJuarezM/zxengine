@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -e
+
+PROGRAM_NAME=$(basename "$0")
+CURRENT_DIR=$(pwd)
+PROJECT_NAME=$1
+
+if [ -z "$ZXENGINE_HOME" ]; then
+    echo "ZXENGINE_HOME is not set"
+    exit 1
+fi
+
+if [ -z "$PROJECT_NAME" ]; then
+    echo "Usage: $PROGRAM_NAME <project_name>"
+    exit 1
+fi
+
+if [ -d "$PROJECT_NAME" ]; then
+    echo "$PROJECT_NAME already exists"
+    exit 1
+fi
+
+cp -r $ZXENGINE_HOME/templates/asm $PROJECT_NAME
+cd $PROJECT_NAME
