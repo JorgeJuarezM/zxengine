@@ -16,30 +16,54 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # ------------------------------------------------------------------------------
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    ZIP_FILE="macos"
+else
+    ZIP_FILE="master"
+fi
+
+echo "Downloading asxxxx-macos"
 if [ ! -f asxxxx.zip ]; then
-    wget https://github.com/JorgeJuarezM/asxxxx/archive/refs/heads/macos.zip -O asxxxx.zip
-else
-    echo "asxxxx.zip already exists -> skipping download"
+    wget https://github.com/JorgeJuarezM/asxxxx/archive/refs/heads/$ZIP_FILE.zip \
+        -O asxxxx.zip > /dev/null 2>&1
 fi
 
+echo "Unzipping asxxxx-macos"
 if [ ! -d asxxxx-macos ]; then
-    unzip asxxxx.zip
-else
-    echo "asxxxx-macos already exists -> skipping unzip"
+    unzip asxxxx.zip > /dev/null 2>&1
 fi
 
-cd asxxxx-macos && make asz80 && make aslink && cd ..
-mv asxxxx-macos/dist/asz80 bin
-mv asxxxx-macos/dist/aslink bin
+echo "Building asz80 and aslink"
+cd asxxxx-$ZIP_FILE \
+    && make asz80 > /dev/null 2>&1 \
+    && make aslink > /dev/null 2>&1 \
+    && cd .. > /dev/null
 
+mv asxxxx-$ZIP_FILE/dist/asz80 bin
+mv asxxxx-$ZIP_FILE/dist/aslink bin
 
+echo "Cleaning up"
 rm -rf asxxxx.zip
-rm -rf asxxxx-macos
+rm -rf asxxxx-$ZIP_FILE
 
-EXISTS=$(grep "^export ZXENGINE_HOME=" ~/.zshrc)
-if [ ! -n "$EXISTS" ]; then
-    echo "" >> ~/.zshrc
-    echo "# ZXEngine" >> ~/.zshrc
-    echo "export ZXENGINE_HOME=$(pwd)" >> ~/.zshrc
-    echo "export PATH=\$PATH:\$ZXENGINE_HOME/bin" >> ~/.zshrc
-fi
+function setEnv() {
+    ENV_FILE=$1
+    if [ ! -f "$ENV_FILE" ]; then
+        return
+    fi
+
+    EXISTS=$(grep "^export ZXENGINE_HOME=" $ENV_FILE)
+    if [ ! -n "$EXISTS" ]; then
+        echo "Setting up environment variables in $ENV_FILE"
+        echo "" >> $ENV_FILE
+        echo "# ZXEngine" >> $ENV_FILE
+        echo "export ZXENGINE_HOME=$(pwd)" >> $ENV_FILE
+        echo "export PATH=\$PATH:\$ZXENGINE_HOME/bin" >> $ENV_FILE
+    fi
+}
+
+setEnv ~/.zshrc
+setEnv ~/.bash_profile
+setEnv ~/.bashrc
+
+echo "Done"

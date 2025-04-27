@@ -15,17 +15,19 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # ------------------------------------------------------------------------------
-ASM:= ./bin/asz80
+ASM := ./bin/asz80
 DIST_LIB_DIR := dist/lib
 SOURCE_CODE_DIRS := zxengine/src
 SOURCE_CODE_FILES := $(foreach dir,$(SOURCE_CODE_DIRS),$(wildcard $(dir)/*.asm))
+SCRIPTS_DIR := scripts
 
 .PHONY: build
+
 install:
-	bash scripts/install_asm.sh
-	bash scripts/install_hex2bin.sh
-	bash scripts/install_zxtaputils.sh
-	$(MAKE) build
+	@bash $(SCRIPTS_DIR)/install_asm.sh
+	# @bash $(SCRIPTS_DIR)/install_hex2bin.sh
+	# @bash $(SCRIPTS_DIR)/install_zxtaputils.sh
+	# $(MAKE) build
 
 build:
 	$(foreach file,$(SOURCE_CODE_FILES), \
