@@ -25,9 +25,9 @@ SCRIPTS_DIR := scripts
 
 install:
 	@bash $(SCRIPTS_DIR)/install_asm.sh
-	# @bash $(SCRIPTS_DIR)/install_hex2bin.sh
-	# @bash $(SCRIPTS_DIR)/install_zxtaputils.sh
-	# $(MAKE) build
+	@bash $(SCRIPTS_DIR)/install_hex2bin.sh
+	@bash $(SCRIPTS_DIR)/install_zxtaputils.sh
+	$(MAKE) build
 
 build:
 	$(foreach file,$(SOURCE_CODE_FILES), \
