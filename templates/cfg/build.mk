@@ -15,24 +15,19 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # ------------------------------------------------------------------------------
-ASM:= ./bin/asz80
-DIST_LIB_DIR := dist/lib
-SOURCE_CODE_DIRS := zxengine/src
-SOURCE_CODE_FILES := $(foreach dir,$(SOURCE_CODE_DIRS),$(wildcard $(dir)/*.asm))
-
-.PHONY: build
-install:
-	bash scripts/install_asm.sh
-	bash scripts/install_hex2bin.sh
-	bash scripts/install_zxtaputils.sh
-
 build:
-	$(foreach file,$(SOURCE_CODE_FILES), \
-		$(ASM) -o $(DIST_LIB_DIR)/$(notdir \
-			$(file:.asm=.rel)) $(file); \
-	)
-	find $(PWD)/dist/lib/ -name *.rel > dist/main.lib
+	asz80 -l -o main src/main.asm
+	aslink -n -u -b _CODE=0x8000 -o -l $(ZXENGINE_HOME)/dist/main.lib -i main.ihx main.rel
+	hex2bin main.ihx
+	tapify --startaddr 32768 main.bin main.tmp.tap
+	bas2tap --autostart 10 $(ZXENGINE_HOME)/templates/basic/loader.bas loader.tmp.tap
+	cat loader.tmp.tap main.tmp.tap > game.tap
+	rm *.tmp.tap
+	rm *.bin
+	rm *.ihx
+	rm *.rel
+	rm *.hlr
+	rm *.lst
+	rm *.rst
+	/Applications/zesarux.app/Contents/MacOS/zesarux $(PWD)/game.tap
 
-clean:
-	find $(PWD)/ -name *.rel -exec rm {} \;
-	find $(PWD)/ -name *.lib -exec rm {} \;
