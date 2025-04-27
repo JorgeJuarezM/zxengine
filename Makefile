@@ -16,12 +16,22 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # ------------------------------------------------------------------------------
 ASM := ./bin/asz80
-DIST_LIB_DIR := dist/lib
-SOURCE_CODE_DIRS := zxengine/src
-SOURCE_CODE_FILES := $(foreach dir,$(SOURCE_CODE_DIRS),$(wildcard $(dir)/*.asm))
 SCRIPTS_DIR := scripts
+DIST_LIB_DIR := dist/lib
+ZXE_LIB := $(DIST_LIB_DIR)/zxengine.lib
+SOURCE_CODE_DIRS := zxengine/src
+SOURCE_CODE_FILES := $(shell find $(SOURCE_CODE_DIRS) -name '*.asm')
+TARGET_FILES := $(subst $(SOURCE_CODE_DIRS), \
+					$(DIST_LIB_DIR), \
+					$(SOURCE_CODE_FILES:%.asm=%.rel))
 
-.PHONY: build
+
+$(DIST_LIB_DIR)/%.rel: $(addprefix $(SOURCE_CODE_DIRS)/, %.asm)
+	$(shell mkdir -p $(dir $@))
+	$(shell $(ASM) -o $@ $<)
+
+$(ZXE_LIB): $(TARGET_FILES)
+	@find $(DIST_LIB_DIR) -name *.rel > dist/zxengine.lib
 
 install:
 	@bash $(SCRIPTS_DIR)/install_asm.sh
@@ -29,13 +39,10 @@ install:
 	@bash $(SCRIPTS_DIR)/install_zxtaputils.sh
 	$(MAKE) build
 
-build:
-	$(foreach file,$(SOURCE_CODE_FILES), \
-		$(ASM) -o $(DIST_LIB_DIR)/$(notdir \
-			$(file:.asm=.rel)) $(file); \
-	)
-	find $(PWD)/dist/lib/ -name *.rel > dist/main.lib
+build: $(TARGET_FILES) $(ZXE_LIB)
 
 clean:
-	find $(PWD)/ -name *.rel -exec rm {} \;
-	find $(PWD)/ -name *.lib -exec rm {} \;
+	@find $(PWD)/ -name *.rel -exec rm {} \;
+	@find $(PWD)/ -name *.lib -exec rm {} \;
+
+.PHONY: install build clean
