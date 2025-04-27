@@ -31,7 +31,7 @@ $(DIST_LIB_DIR)/%.rel: $(addprefix $(SOURCE_CODE_DIRS)/, %.asm)
 	$(shell $(ASM) -o $@ $<)
 
 $(ZXE_LIB): $(TARGET_FILES)
-	@find $(DIST_LIB_DIR) -name *.rel > dist/zxengine.lib
+	@find $(PWD)/$(DIST_LIB_DIR) -name *.rel > dist/zxengine.lib
 
 install:
 	@bash $(SCRIPTS_DIR)/install_asm.sh

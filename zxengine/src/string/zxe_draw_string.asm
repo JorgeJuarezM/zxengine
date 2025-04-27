@@ -15,28 +15,18 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ;;------------------------------------------------------------------------------
+;;
+;;  Draws a string on the screen.
+;;  Input:
+;;      HL  => Address where the string is stored.
+;;
+zxe_draw_string::
+  ld    a,    (hl)                  ;;  Load the current character.
+  cp    #0x00                       ;;  Compare to know if the string has finished.
+  jp    z,   end_draw_string        ;;  Jump to end if string has finished.
+  rst   #0x10                       ;;  Call the print interruption.
+  inc   hl                          ;;  Get next character address.
+  jp    zxe_draw_string             ;;  Continue printing.
 
-;;
-;;  Declare global ZXEngine built-in functions.
-;;
-.globl  zxe_clear_screen
-.globl  zxe_draw_string
-
-;;
-;;  Application Entry Point.
-;;
-main:
-    ;; Clear the screen.
-    call  zxe_clear_screen
-
-    ;; Load the string address in HL
-    ld    hl, string
-
-    ;; Draw the string.
-    call  zxe_draw_string
-    jr  .
-
-;;
-;;  Define the string to be drawed.
-;;
-string: .asciz "ZXEngine, Hello World!"
+end_draw_string:
+  ret                               ;;  Done.
