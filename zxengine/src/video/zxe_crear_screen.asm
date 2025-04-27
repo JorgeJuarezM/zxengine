@@ -26,4 +26,3 @@ zxe_clear_screen::
   ld    (hl), 0x00                  ;; Clear the first byte in video memory.
   ldir                              ;; Copy from Hl to DE, N times defined by BC.
   ret
-  
