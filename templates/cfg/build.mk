@@ -29,32 +29,58 @@ define ASM_TO_REL
 $(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(1:.asm=.rel))
 endef
 
+################################################################################
+
+THIS_FILE 	:= 	$(dir $(lastword $(MAKEFILE_LIST)))
+
 ################################## VARIABLES ###################################
+
+include 	$(THIS_FILE)global_vars.mk
+
 GAME		:= 	game.tap
-ZXE_HOME	:= 	${HOME}/.zxengine
+GAME_BIN	:=	game.bin
+GAME_IHX	:= 	game.ihx
+
+SRC_DIR		:=	src
+OBJ_DIR		:=	obj
+SRC_FILES	:=	$(shell find $(SRC_DIR) -iname '*.asm')
+REL_FILES	:=	$(foreach F, $(SRC_FILES),$(call ASM_TO_REL,$(F)))
+
+LIBS		:=	$(ZXE_LIB)
+LIBS_DIR	:=	$(ZXE_HOME)/lib/
+
+CODE_START	:=	0x8000
+PROG_START	:=	32768
+CLR_START	:=	32767
+
+CB			:=	7		# Border color	(white)
+CP			:=	7		# Paper color	(white)
+CI			:=	0		# Ink color		(black)
+
+# asz80
 ASM			:=	$(ZXE_HOME)/bin/asz80
 ASM_FLAGS 	:= 	-o
 
-
-H2B			:=	$(ZXE_HOME)/bin/hex2bin
-B2T			:=	$(ZXE_HOME)/bin/bin2tap
-B2T_FLAGS	:=	-b  -c 32767 -r 32768 -cb 7 -cp 7 -ci 0
-SRC_DIR		:=	src
-OBJ_DIR		:=	obj
-SRC_FILES	:=	$(shell find $(SRC_DIR) -name '*.asm')
-REL_FILES	:=	$(foreach F, $(SRC_FILES),$(call ASM_TO_REL,$(F)))
-GAME_IHX	:= 	$(OBJ_DIR)/game.ihx
-LIBS		:=	zxengine.lib
-LIBS_DIR	:=	$(abspath $(lastword $(dir $(MAKEFILE_LIST))))/../../dist/
-
+# aslink
 LNK			:=	$(ZXE_HOME)/bin/aslink
-LNK_FLAGS	:=	-o -b _CODE=0x8000 -k $(LIBS_DIR) -l $(LIBS)
+LNK_FLAGS	:=	-o -b _CODE=$(CODE_START) -k $(LIBS_DIR) -l $(LIBS)
 
-$(GAME): $(GAME_IHX)
-	$(B2T) $(B2T_FLAGS) -o $(GAME) $(GAME_IHX)
+# hex2bin
+H2B			:=	$(ZXE_HOME)/bin/hex2bin
 
-$(GAME_IHX): $(REL_FILES)
-	$(LNK) $(LNK_FLAGS) -i $(GAME_IHX) $(REL_FILES)
+# bin2tap
+B2T			:=	$(ZXE_HOME)/bin/bin2tap
+B2T_FLAGS	:=	-b  -c $(CLR_START) -r $(PROG_START) \
+				-cb $(CB) -cp $(CP) -ci $(CI)
+
+
+$(GAME): $(OBJ_DIR)/$(GAME_IHX)
+	$(H2B) $(H2B_FLAGS) $(OBJ_DIR)/$(GAME_IHX)
+	$(B2T) $(B2T_FLAGS) -o $(GAME) $(OBJ_DIR)/$(GAME_BIN)
+
+
+$(OBJ_DIR)/$(GAME_IHX): $(REL_FILES)
+	$(LNK) $(LNK_FLAGS) -i $(OBJ_DIR)/$(GAME_IHX) $(REL_FILES)
 
 # Generate all rel files.
 $(foreach F, $(SRC_FILES), \
@@ -62,17 +88,10 @@ $(foreach F, $(SRC_FILES), \
 	$(call ASM_TO_REL, $(F)), $(F))\
 ))
 
-
-build:
-	mkdir -p $(OBJ_DIR)
-	$(ASM) -o $(OBJ_DIR)/main src/main.asm
-	$(LNK) -b _CODE=0x8000 -o -k $(ZXENGINE_HOME)/dist/ -l zxengine.lib -i $(OBJ_DIR)/main.ihx $(OBJ_DIR)/main.rel
-	$(H2B) $(OBJ_DIR)/main.ihx
-	$(B2T) $(B2T_FLAGS) -o game.tap $(OBJ_DIR)/main.bin
-
 clean:
 	find $(OBJ_DIR) -name '*.rel' -delete
 	find $(OBJ_DIR) -name '*.ihx' -delete
+	find $(OBJ_DIR) -name '*.bin' -delete
 
 info:
-	$(info $(LIBS_DIR))
+	$(info $(THIS_FILE))

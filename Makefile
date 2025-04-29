@@ -33,7 +33,7 @@ endef
 ZXE_HOME	:= 	${HOME}/.zxengine
 ASM 		:= 	$(ZXE_HOME)/bin/asz80
 ASM_FLAGS 	:= 	-o
-DIST_DIR	:= 	dist
+DIST_DIR	:= 	$(ZXE_HOME)/lib
 ZXE_LIB 	:= 	$(DIST_DIR)/zxengine.lib
 SCRIPTS_DIR := 	scripts
 SRC_DIR 	:= 	zxengine/src
