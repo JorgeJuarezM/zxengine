@@ -15,26 +15,64 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # ------------------------------------------------------------------------------
+############################## MACROS ##########################################
+#	$(1) - Target
+#	$(2) - Source
+define COMPILE_ASM
+$(1): $(2)
+	mkdir -p $(dir $(1))
+	$(ASM) $(ASM_FLAGS) $(1) $(2)
+endef
+
+# $(1) - ASM file
+define ASM_TO_REL
+$(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(1:.asm=.rel))
+endef
+
+################################## VARIABLES ###################################
+GAME		:= 	game.tap
 ZXE_HOME	:= 	${HOME}/.zxengine
 ASM			:=	$(ZXE_HOME)/bin/asz80
-LNK			:=	$(ZXE_HOME)/bin/aslink
+ASM_FLAGS 	:= 	-o
+
+
 H2B			:=	$(ZXE_HOME)/bin/hex2bin
 B2T			:=	$(ZXE_HOME)/bin/bin2tap
 B2T_FLAGS	:=	-b  -c 32767 -r 32768 -cb 7 -cp 7 -ci 0
-DIR_OBJ		:=	obj
+SRC_DIR		:=	src
+OBJ_DIR		:=	obj
+SRC_FILES	:=	$(shell find $(SRC_DIR) -name '*.asm')
+REL_FILES	:=	$(foreach F, $(SRC_FILES),$(call ASM_TO_REL,$(F)))
+GAME_IHX	:= 	$(OBJ_DIR)/game.ihx
+LIBS		:=	zxengine.lib
+LIBS_DIR	:=	$(abspath $(lastword $(dir $(MAKEFILE_LIST))))/../../dist/
+
+LNK			:=	$(ZXE_HOME)/bin/aslink
+LNK_FLAGS	:=	-o -b _CODE=0x8000 -k $(LIBS_DIR) -l $(LIBS)
+
+$(GAME): $(GAME_IHX)
+	$(B2T) $(B2T_FLAGS) -o $(GAME) $(GAME_IHX)
+
+$(GAME_IHX): $(REL_FILES)
+	$(LNK) $(LNK_FLAGS) -i $(GAME_IHX) $(REL_FILES)
+
+# Generate all rel files.
+$(foreach F, $(SRC_FILES), \
+	$(eval $(call COMPILE_ASM,\
+	$(call ASM_TO_REL, $(F)), $(F))\
+))
+
 
 build:
-	mkdir -p $(DIR_OBJ)
-	$(ASM) -o $(DIR_OBJ)/main src/main.asm
-	$(LNK) -b _CODE=0x8000 -o -k $(ZXENGINE_HOME)/dist/ -l zxengine.lib -i $(DIR_OBJ)/main.ihx $(DIR_OBJ)/main.rel
-	$(H2B) $(DIR_OBJ)/main.ihx
-	$(B2T) $(B2T_FLAGS) -o game.tap $(DIR_OBJ)/main.bin
+	mkdir -p $(OBJ_DIR)
+	$(ASM) -o $(OBJ_DIR)/main src/main.asm
+	$(LNK) -b _CODE=0x8000 -o -k $(ZXENGINE_HOME)/dist/ -l zxengine.lib -i $(OBJ_DIR)/main.ihx $(OBJ_DIR)/main.rel
+	$(H2B) $(OBJ_DIR)/main.ihx
+	$(B2T) $(B2T_FLAGS) -o game.tap $(OBJ_DIR)/main.bin
 
 clean:
-	rm -f *.tap
-	rm -f *.bin
-	rm -f *.ihx
-	rm -f *.rel
-	rm -f *.hlr
-	rm -f *.lst
-	rm -f *.rst
+	find $(OBJ_DIR) -name '*.rel' -delete
+	find $(OBJ_DIR) -name '*.ihx' -delete
+
+info:
+	$(info $(LIBS_DIR))
