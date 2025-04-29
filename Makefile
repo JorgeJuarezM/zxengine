@@ -20,19 +20,20 @@
 #	$(2) - Source
 define COMPILE_ASM
 $(1): $(2)
+	mkdir -p $(dir $(1))
 	$(ASM) $(ASM_FLAGS) $(1) $(2)
 endef
 
 # $(1) - ASM file
 define ASM_TO_REL
-$(patsubst $(SRC_DIR)/%, $(DISt_DIR)/%, $(1:.asm=.rel))
+$(patsubst $(SRC_DIR)/%, $(DIST_DIR)/%, $(1:.asm=.rel))
 endef
 
 ############################## CONFIG ##########################################
 ASM 		:= 	./bin/asz80
 ASM_FLAGS 	:= 	-o
-DISt_DIR	:= 	dist/lib
-ZXE_LIB 	:= 	$(DISt_DIR)/zxengine.lib
+DIST_DIR	:= 	dist
+ZXE_LIB 	:= 	$(DIST_DIR)/zxengine.lib
 SCRIPTS_DIR := 	scripts
 SRC_DIR 	:= 	zxengine/src
 SRC_FILES	:= 	$(shell find $(SRC_DIR) -name '*.asm')
@@ -42,7 +43,7 @@ RM_FLAGS	:=	-f
 
 $(ZXE_LIB): $(REL_FILES)
 	$(RM) $(RM_FLAGS) $@
-	$(foreach f,$^,echo $f >> $@;)
+	$(foreach f, $(REL_FILES), echo $(subst $(DIST_DIR)/,,$(f)) >> $@;)
 
 
 # Generate all rel files.
