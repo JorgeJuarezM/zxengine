@@ -16,9 +16,6 @@
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ;;------------------------------------------------------------------------------
 
-;;
-;;  Declare global ZXEngine built-in functions.
-;;
 .globl  zxe_clear_screen
 .globl  zxe_draw_string
 

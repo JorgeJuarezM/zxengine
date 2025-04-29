@@ -15,19 +15,26 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # ------------------------------------------------------------------------------
-build:
-	asz80 -l -o main src/main.asm
-	aslink -n -u -b _CODE=0x8000 -o -k $(ZXENGINE_HOME)/dist/ -l zxengine.lib -i main.ihx main.rel
-	hex2bin main.ihx
-	tapify --startaddr 32768 main.bin main.tmp.tap
-	bas2tap --autostart 10 $(ZXENGINE_HOME)/templates/basic/loader.bas loader.tmp.tap
-	cat loader.tmp.tap main.tmp.tap > game.tap
-	rm *.tmp.tap
-	rm *.bin
-	rm *.ihx
-	rm *.rel
-	rm *.hlr
-	rm *.lst
-	rm *.rst
-	/Applications/zesarux.app/Contents/MacOS/zesarux $(PWD)/game.tap
+ZXE_HOME	:= 	${HOME}/.zxengine
+ASM			:=	$(ZXE_HOME)/bin/asz80
+LNK			:=	$(ZXE_HOME)/bin/aslink
+H2B			:=	$(ZXE_HOME)/bin/hex2bin
+B2T			:=	$(ZXE_HOME)/bin/bin2tap
+B2T_FLAGS	:=	-b  -c 32767 -r 32768 -cb 7 -cp 7 -ci 0
+DIR_OBJ		:=	obj
 
+build:
+	mkdir -p $(DIR_OBJ)
+	$(ASM) -o $(DIR_OBJ)/main src/main.asm
+	$(LNK) -b _CODE=0x8000 -o -k $(ZXENGINE_HOME)/dist/ -l zxengine.lib -i $(DIR_OBJ)/main.ihx $(DIR_OBJ)/main.rel
+	$(H2B) $(DIR_OBJ)/main.ihx
+	$(B2T) $(B2T_FLAGS) -o game.tap $(DIR_OBJ)/main.bin
+
+clean:
+	rm -f *.tap
+	rm -f *.bin
+	rm -f *.ihx
+	rm -f *.rel
+	rm -f *.hlr
+	rm -f *.lst
+	rm -f *.rst
