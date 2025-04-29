@@ -69,6 +69,7 @@ clean:
 
 info:
 	$(info $(ZXE_HOME))
+	$(info $(HOME))
 
 
 build: $(ALL_DIRS)

@@ -8,7 +8,7 @@ OUT_DIR 	:=	dist
 ################################################################################
 CC		=	gcc
 CCOPT	=	-O3
-CCFLAGS	=	-Wall -funsigned-char $(CCOPT) -Wformat=0
+CCFLAGS	=	-Wall -funsigned-char $(CCOPT) -Wno-deprecated-non-prototype
 
 LD		=	gcc
 LDFLAGS	=	-Wall
@@ -52,16 +52,16 @@ all: aslink asz80
 # Build asz80
 $(ASZ80SRC): $(SRCMISC)alloc.h $(SRCASX)asxxxx.h $(SRCZ80)z80.h
 
-$(ASZ80_BIN): $(OUT_DIR) $(ASXXSRC) $(ASZ80SRC)
+$(ASZ80_BIN): $(ASXXSRC) $(ASZ80SRC)
+	$(MKDIR_P) $(OUT_DIR)
 	$(LD) $(LDFLAGS) $(ASXXSRC) $(ASZ80SRC) -o $(OUT_DIR)/asz80
-	chmod 755 $(OUT_DIR)/asz80
 
 # Build aslink
 $(ASLINK):	$(SRCMISC)alloc.h $(SRCLNK)aslink.h
 
-$(ASLINK_BIN): $(OUT_DIR) $(ASLINKSRC)
+$(ASLINK_BIN): $(ASLINKSRC)
+	$(MKDIR_P) $(OUT_DIR)
 	$(LD) $(LDFLAGS) $(ASLINKSRC) -o $(OUT_DIR)/aslink
-	chmod 755 $(OUT_DIR)/aslink
 
 # Build directories
 $(OUT_DIR):
