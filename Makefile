@@ -64,6 +64,7 @@ install:
 	$(MAKE) -C zxengine/tools/asxxxx OUT_DIR=$(ZXE_HOME)/bin
 	$(MAKE) -C zxengine/tools/hex2bin OUT_DIR=$(ZXE_HOME)/bin
 	$(MAKE) -C zxengine/tools/bin2tap OUT_DIR=$(ZXE_HOME)/bin
+	cp -R templates/ $(ZXE_HOME)/templates/
 
 clean:
 	@find $(PWD)/ -name *.rel -exec rm {} \;
