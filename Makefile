@@ -30,9 +30,10 @@ $(patsubst $(SRC_DIR)/%, $(DIST_DIR)/%, $(1:.asm=.rel))
 endef
 
 ############################## CONFIG ##########################################
-ASM 		:= 	./bin/asz80
+ZXE_HOME	:= 	${HOME}/.zxengine
+ASM 		:= 	$(ZXE_HOME)/bin/asz80
 ASM_FLAGS 	:= 	-o
-DIST_DIR	:= 	dist
+DIST_DIR	:= 	$(ZXE_HOME)/lib
 ZXE_LIB 	:= 	$(DIST_DIR)/zxengine.lib
 SCRIPTS_DIR := 	scripts
 SRC_DIR 	:= 	zxengine/src
@@ -40,8 +41,11 @@ SRC_FILES	:= 	$(shell find $(SRC_DIR) -name '*.asm')
 REL_FILES	:=	$(foreach F, $(SRC_FILES), $(call ASM_TO_REL, $(F)))
 RM			:=	rm
 RM_FLAGS	:=	-f
+MKDIR		:=	mkdir -p
+BIN_DIR		:=	$(ZXE_HOME)/bin
+ALL_DIRS	:=	$(ZXE_HOME) $(BIN_DIR)
 
-$(ZXE_LIB): $(REL_FILES)
+$(ZXE_LIB): $(ZXE_HOME) $(REL_FILES)
 	$(RM) $(RM_FLAGS) $@
 	$(foreach f, $(REL_FILES), echo $(subst $(DIST_DIR)/,,$(f)) >> $@;)
 
@@ -53,17 +57,25 @@ $(foreach F, $(SRC_FILES), \
 ))
 
 
+$(ALL_DIRS):
+	$(MKDIR) $(ALL_DIRS)
+
 install:
-	@bash $(SCRIPTS_DIR)/install_asm.sh
-	@bash $(SCRIPTS_DIR)/install_hex2bin.sh
-	@bash $(SCRIPTS_DIR)/install_zxtaputils.sh
-	$(MAKE) build
+	$(MAKE) -C zxengine/tools/asxxxx OUT_DIR=$(ZXE_HOME)/bin
+	$(MAKE) -C zxengine/tools/hex2bin OUT_DIR=$(ZXE_HOME)/bin
+	$(MAKE) -C zxengine/tools/bin2tap OUT_DIR=$(ZXE_HOME)/bin
+	cp -R templates/ $(ZXE_HOME)/templates/
 
 clean:
 	@find $(PWD)/ -name *.rel -exec rm {} \;
 	@find $(PWD)/ -name *.lib -exec rm {} \;
 
 info:
-	$(info $(REL_FILES))
+	$(info $(ZXE_HOME))
+	$(info $(HOME))
+
+
+build: $(ALL_DIRS)
+
 
 .PHONY: install build clean info
