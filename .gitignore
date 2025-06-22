@@ -6,3 +6,4 @@ dist/
 *.rel
 *.o
 *.bin
+.DS_Store

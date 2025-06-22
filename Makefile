@@ -30,7 +30,6 @@ $(patsubst $(SRC_DIR)/%, $(DIST_DIR)/%, $(1:.asm=.rel))
 endef
 
 ############################## CONFIG ##########################################
-ZXE_HOME	:= 	${HOME}/.zxengine
 ASM 		:= 	$(ZXE_HOME)/bin/asz80
 ASM_FLAGS 	:= 	-o
 DIST_DIR	:= 	$(ZXE_HOME)/lib
@@ -43,7 +42,9 @@ RM			:=	rm
 RM_FLAGS	:=	-f
 MKDIR		:=	mkdir -p
 BIN_DIR		:=	$(ZXE_HOME)/bin
-ALL_DIRS	:=	$(ZXE_HOME) $(BIN_DIR)
+TPL_DIR		:=	$(ZXE_HOME)/templates
+ALL_DIRS	:=	$(BIN_DIR) $(TPL_DIR) $(ZXE_HOME)
+COPY_R		:=	cp -R
 
 $(ZXE_LIB): $(ZXE_HOME) $(REL_FILES)
 	$(RM) $(RM_FLAGS) $@
@@ -64,18 +65,19 @@ install:
 	$(MAKE) -C zxengine/tools/asxxxx OUT_DIR=$(ZXE_HOME)/bin
 	$(MAKE) -C zxengine/tools/hex2bin OUT_DIR=$(ZXE_HOME)/bin
 	$(MAKE) -C zxengine/tools/bin2tap OUT_DIR=$(ZXE_HOME)/bin
-	cp -R templates/ $(ZXE_HOME)/templates/
+	$(COPY_R) ./templates/ $(TPL_DIR)/
+	$(MAKE) $(ZXE_LIB)
 
 clean:
+	@find $(PWD)/ -name *.o -exec rm {} \;
 	@find $(PWD)/ -name *.rel -exec rm {} \;
 	@find $(PWD)/ -name *.lib -exec rm {} \;
 
+clean_all:
+	$(MAKE) clean
+	$(RM) $(RM_FLAGS) -dr $(ZXE_HOME)
+
 info:
 	$(info $(ZXE_HOME))
-	$(info $(HOME))
-
-
-build: $(ALL_DIRS)
-
 
 .PHONY: install build clean info

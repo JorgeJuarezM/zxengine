@@ -15,5 +15,5 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # ------------------------------------------------------------------------------
-ZXE_HOME := $(HOME)/.zxengine
+GAME_NAME	:= 	$(notdir $(CURDIR))
 include $(ZXE_HOME)/templates/cfg/build.mk

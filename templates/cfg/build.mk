@@ -20,13 +20,28 @@
 #	$(2) - Source
 define COMPILE_ASM
 $(1): $(2)
-	mkdir -p $(dir $(1))
+	@mkdir -p $(dir $(1))
 	$(ASM) $(ASM_FLAGS) $(1) $(2)
 endef
 
 # $(1) - ASM file
 define ASM_TO_REL
 $(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(1:.asm=.rel))
+endef
+
+# $(1) - NOI file
+define GET_MAIN_ADDR
+$(shell grep -E '^DEF[[:space:]]+_main[[:space:]]' $(1) | awk '{print $$3}')
+endef
+
+# $(1) - NOI file
+define GET_MAIN_ADDR_DEC
+$(shell printf '%d' $(call GET_MAIN_ADDR, $(1)))
+endef
+
+# $(1) - NOI file
+define GET_NEXT_MAIN_ADDR_DEC
+$(shell echo $$(( $(call GET_MAIN_ADDR_DEC, $(1)) - 1 )))
 endef
 
 ################################################################################
@@ -37,25 +52,29 @@ THIS_FILE 	:= 	$(dir $(lastword $(MAKEFILE_LIST)))
 
 include 	$(THIS_FILE)global_vars.mk
 
-GAME		:= 	game.tap
-GAME_BIN	:=	game.bin
-GAME_IHX	:= 	game.ihx
+GAME_NAME	?= 	game
+
+OBJ_DIR		:=	obj
+GAME_TAP	:= 	$(GAME_NAME).tap
+GAME_BIN	:=	$(OBJ_DIR)/$(GAME_NAME).bin
+GAME_IHX	:= 	$(OBJ_DIR)/$(GAME_NAME).ihx
+GAME_NOI	:= 	$(OBJ_DIR)/$(GAME_NAME).noi
 
 SRC_DIR		:=	src
-OBJ_DIR		:=	obj
 SRC_FILES	:=	$(shell find $(SRC_DIR) -iname '*.asm')
 REL_FILES	:=	$(foreach F, $(SRC_FILES),$(call ASM_TO_REL,$(F)))
 
 LIBS		:=	$(ZXE_LIB)
 LIBS_DIR	:=	$(ZXE_HOME)/lib/
 
-CODE_START	:=	0x8000
-PROG_START	:=	32768
-CLR_START	:=	32767
+CODE_START	?=	0x8000
 
-CB			:=	7		# Border color	(white)
-CP			:=	7		# Paper color	(white)
-CI			:=	0		# Ink color		(black)
+# Border color	(white)
+CB			:=	7
+# Paper color	(white)
+CP			:=	7
+# Ink color		(black)
+CI			:=	0
 
 # asz80
 ASM			:=	$(ZXE_HOME)/bin/asz80
@@ -63,24 +82,26 @@ ASM_FLAGS 	:= 	-o
 
 # aslink
 LNK			:=	$(ZXE_HOME)/bin/aslink
-LNK_FLAGS	:=	-o -b _CODE=$(CODE_START) -k $(LIBS_DIR) -l $(LIBS)
+LNK_FLAGS	:=	-j -o -b _CODE=$(CODE_START) -k $(LIBS_DIR) -l $(LIBS)
 
 # hex2bin
 H2B			:=	$(ZXE_HOME)/bin/hex2bin
-
+H2B_FLAGS	:=	-p 0x00
 # bin2tap
 B2T			:=	$(ZXE_HOME)/bin/bin2tap
-B2T_FLAGS	:=	-b  -c $(CLR_START) -r $(PROG_START) \
-				-cb $(CB) -cp $(CP) -ci $(CI)
+B2T_FLAGS	:=	-b -cb $(CB) -cp $(CP) -ci $(CI) -o $(GAME_TAP)
 
 
-$(GAME): $(OBJ_DIR)/$(GAME_IHX)
-	$(H2B) $(H2B_FLAGS) $(OBJ_DIR)/$(GAME_IHX)
-	$(B2T) $(B2T_FLAGS) -o $(GAME) $(OBJ_DIR)/$(GAME_BIN)
+$(GAME_TAP): $(GAME_IHX) $(GAME_NOI)
+	$(eval PROG_START := $(call GET_MAIN_ADDR_DEC, $(GAME_NOI)))
+	$(eval CLR_ADDR := $(call GET_NEXT_MAIN_ADDR_DEC, $(GAME_NOI)))
+
+	$(H2B) $(H2B_FLAGS) $(GAME_IHX)
+	$(B2T) $(B2T_FLAGS) -r $(PROG_START) -c $(CLR_ADDR) $(GAME_BIN)
 
 
-$(OBJ_DIR)/$(GAME_IHX): $(REL_FILES)
-	$(LNK) $(LNK_FLAGS) -i $(OBJ_DIR)/$(GAME_IHX) $(REL_FILES)
+$(GAME_IHX): $(REL_FILES)
+	$(LNK) $(LNK_FLAGS) -i $(GAME_IHX) $(REL_FILES)
 
 # Generate all rel files.
 $(foreach F, $(SRC_FILES), \
@@ -89,9 +110,13 @@ $(foreach F, $(SRC_FILES), \
 ))
 
 clean:
-	find $(OBJ_DIR) -name '*.rel' -delete
-	find $(OBJ_DIR) -name '*.ihx' -delete
-	find $(OBJ_DIR) -name '*.bin' -delete
+	@find $(OBJ_DIR) -name '*.rel' -delete
+	@find $(OBJ_DIR) -name '*.ihx' -delete
+	@find $(OBJ_DIR) -name '*.map' -delete
+	@find $(OBJ_DIR) -name '*.noi' -delete
+	@find $(OBJ_DIR) -name '*.bin' -delete
 
 info:
 	$(info $(THIS_FILE))
+
+.PHONY: clean info
