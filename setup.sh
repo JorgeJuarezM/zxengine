@@ -16,26 +16,27 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # ------------------------------------------------------------------------------
-set -e
+export ZXE_HOME=~/.zxengine
+function setEnv() {
+    ENV_FILE=$1
+    if [ ! -f "$ENV_FILE" ]; then
+        return
+    fi
+    EXISTS=$(grep "^export ZXE_HOME=" $ENV_FILE)
+    if [ ! -n "$EXISTS" ]; then
+        echo "Setting up environment variables in $ENV_FILE"
+        echo "" >> $ENV_FILE
+        echo "# ZXEngine" >> $ENV_FILE
+        echo "export ZXE_HOME=${ZXE_HOME}" >> $ENV_FILE
+        echo "export PATH=\$PATH:\$ZXE_HOME/bin" >> $ENV_FILE
+    fi
+}
 
-PROGRAM_NAME=$(basename "$0")
-CURRENT_DIR=$(pwd)
-PROJECT_NAME=$1
+# Install zxengine
+make install ZXE_HOME=$ZXE_HOME
+make ZXE_HOME=$ZXE_HOME
 
-if [ -z "$ZXENGINE_HOME" ]; then
-    echo "ZXENGINE_HOME is not set"
-    exit 1
-fi
-
-if [ -z "$PROJECT_NAME" ]; then
-    echo "Usage: $PROGRAM_NAME <project_name>"
-    exit 1
-fi
-
-if [ -d "$PROJECT_NAME" ]; then
-    echo "$PROJECT_NAME already exists"
-    exit 1
-fi
-
-cp -r $ZXENGINE_HOME/templates/asm $PROJECT_NAME
-cd $PROJECT_NAME
+# Export ZXEngine Home in user profiles.
+setEnv ~/.zshrc
+setEnv ~/.bash_profile
+setEnv ~/.bashrc
